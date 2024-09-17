@@ -8,6 +8,7 @@ test:
   script:
     - npm ci --omit=optional
     - npm test
+    - npm run integration
 
 setup:
   rules:

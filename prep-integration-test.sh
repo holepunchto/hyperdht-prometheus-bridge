@@ -27,4 +27,6 @@ tar -xf prometheus.tar.gz
 
 cp "./prometheus-${PROMETHEUS_VERSION}.${OWN_OS}/prometheus" ./prometheus/prometheus
 
+rm -r prometheus-${PROMETHEUS_VERSION}.${OWN_OS}/
+
 echo "Successfully prepared integration test (Prometheus downloaded and setup)"

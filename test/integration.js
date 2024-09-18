@@ -169,6 +169,7 @@ test('Integration test, happy path', async t => {
   const res = await axios.get(`${bridgeHttpAddress}/metrics`)
   t.is(res.status, 200, 'can scrape own metrics')
   t.is(res.data.includes('nodejs_eventloop_lag_mean_seconds'), true, 'sanity check')
+  t.is(res.data.includes('hyperswarm_server_connections_opened'), true, 'Own metrics include swarm metrics')
 
   // 3) Setup prometheus
   const promConfigFileLoc = path.join(tmpDir, 'prometheus.yml')

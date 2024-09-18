@@ -1,15 +1,19 @@
 # This is an example config.
 
 global:
-  scrape_interval: 5s
-  evaluation_interval: 5s
+  scrape_interval: 15s
+  evaluation_interval: 15s
 
-# Source for relabeling approach: https://stackoverflow.com/questions/59866342/prometheus-dynamic-metrics-path
 scrape_configs:
+- job_name: 'dht-prometheus' # The metrics of the dht-prometheus service itself
+  static_configs:
+    - targets:
+      - "localhost:30000" # Replace with the host and port where the dht-prometheus http server runs
 - job_name: 'dht-prom-redirects'
   file_sd_configs:
   - files:
     - 'targets.json'
+  # Source for relabeling approach: https://stackoverflow.com/questions/59866342/prometheus-dynamic-metrics-path
   relabel_configs:
     relabel_configs:
       # Targets are structured as <alias>:<target z32 key>:hostname:service (we extract each part)
@@ -29,5 +33,5 @@ scrape_configs:
         replacement: "$1"
         target_label: service
       - source_labels: [__address__]
-        replacement: "localhost:30000" # Replace with the port where the dht-prometheus http server runs
+        replacement: "localhost:30000" # Replace with the host and port where the dht-prometheus http server runs
         target_label: __address__

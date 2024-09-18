@@ -1,12 +1,15 @@
 #! /usr/bin/env node
 
-const HyperDHT = require('hyperdht')
-const PrometheusDhtBridge = require('./index')
+const HyperDht = require('hyperdht')
+const Hyperswarm = require('hyperswarm')
 const pino = require('pino')
 const fastify = require('fastify')
 const idEnc = require('hypercore-id-encoding')
 const goodbye = require('graceful-goodbye')
 const promClient = require('prom-client')
+
+const PrometheusDhtBridge = require('./index')
+const instrument = require('./lib/instrument')
 
 function loadConfig () {
   const config = {
@@ -60,14 +63,18 @@ async function main () {
     _forceFlushOnClientReady
   } = loadConfig()
 
-  promClient.collectDefaultMetrics()
-
   const logger = pino({ level: logLevel })
   logger.info('Starting up Prometheus DHT bridge')
 
-  const dht = new HyperDHT({ bootstrap })
+  // Generates new if seed is undefined
+  const keyPair = HyperDht.keyPair(keyPairSeed)
+  const swarm = new Hyperswarm({
+    bootstrap,
+    keyPair
+  })
+
   const server = fastify({ logger })
-  const bridge = new PrometheusDhtBridge(dht, server, sharedSecret, {
+  const bridge = new PrometheusDhtBridge(swarm, server, sharedSecret, {
     keyPairSeed,
     ownPromClient: promClient,
     prometheusTargetsLoc,
@@ -75,6 +82,7 @@ async function main () {
     serverLogLevel
   })
 
+  instrument(swarm, promClient)
   bridge.registerLogger(logger)
 
   goodbye(async () => {

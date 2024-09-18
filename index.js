@@ -2,8 +2,6 @@ const ReadyResource = require('ready-resource')
 const idEnc = require('hypercore-id-encoding')
 const b4a = require('b4a')
 const safetyCatch = require('safety-catch')
-const Hyperswarm = require('hyperswarm')
-const HyperDht = require('hyperdht')
 const AliasRpcServer = require('dht-prom-alias-rpc')
 
 const ScraperClient = require('dht-prom-client/scraper')
@@ -13,8 +11,7 @@ const debounceify = require('debounceify')
 const DEFAULT_PROM_TARGETS_LOC = './targets.json'
 
 class PrometheusDhtBridge extends ReadyResource {
-  constructor (dht, server, sharedSecret, {
-    keyPairSeed,
+  constructor (swarm, server, sharedSecret, {
     ownPromClient,
     _forceFlushOnClientReady = false,
     prometheusTargetsLoc = DEFAULT_PROM_TARGETS_LOC,
@@ -24,14 +21,7 @@ class PrometheusDhtBridge extends ReadyResource {
   } = {}) {
     super()
 
-    // Generates new if seed is undefined
-    const keyPair = HyperDht.keyPair(keyPairSeed)
-
-    this.swarm = new Hyperswarm({
-      dht,
-      keyPair
-    })
-
+    this.swarm = swarm
     this.secret = sharedSecret // Shared with clients
 
     this.entryExpiryMs = entryExpiryMs

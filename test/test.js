@@ -11,6 +11,7 @@ const axios = require('axios')
 const hypCrypto = require('hypercore-crypto')
 const getTmpDir = require('test-tmp')
 const PrometheusDhtBridge = require('../index')
+const Hyperswarm = require('hyperswarm')
 
 test('put alias + lookup happy flow', async t => {
   const { bridge, dhtPromClient } = await setup(t)
@@ -235,11 +236,11 @@ async function setup (t, bridgeOpts = {}) {
 
   const sharedSecret = hypCrypto.randomBytes(32)
 
-  const dht = new HyperDHT({ bootstrap })
+  const swarm = new Hyperswarm({ bootstrap })
   const server = fastify({ logger: false })
   const tmpDir = await getTmpDir(t)
   const prometheusTargetsLoc = path.join(tmpDir, 'prom-targets.json')
-  const bridge = new PrometheusDhtBridge(dht, server, sharedSecret, {
+  const bridge = new PrometheusDhtBridge(swarm, server, sharedSecret, {
     _forceFlushOnClientReady: true, // to avoid race conditions
     prometheusTargetsLoc,
     ...bridgeOpts
@@ -261,7 +262,7 @@ async function setup (t, bridgeOpts = {}) {
     await server.close()
     await bridge.close()
     await dhtPromClient.close()
-    await dht.destroy()
+    await swarm.destroy()
     await testnet.destroy()
     promClient.register.clear()
   })

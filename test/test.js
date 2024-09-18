@@ -167,15 +167,18 @@ test('A client which registers itself can get scraped', async t => {
 })
 
 test('A client gets removed and closed after it expires', async t => {
-  const { bridge } = await setup(t, {
+  const { bridge, dhtPromClient } = await setup(t, {
     entryExpiryMs: 500,
     checkExpiredsIntervalMs: 100
   })
-  const key = 'a'.repeat(64)
 
   await bridge.ready()
+  await dhtPromClient.ready()
 
-  bridge.putAlias('dummy', key)
+  bridge.putAlias('dummy', dhtPromClient.publicKey)
+  await bridge.swarm.flush() // Avoid race condition
+  // Can be 2 if the alias-request connection isn't cleaned up yet
+  t.is(bridge.swarm.connections.size > 0, true, 'sanity check: connected')
 
   const entry = bridge.aliases.get('dummy')
 
@@ -189,6 +192,8 @@ test('A client gets removed and closed after it expires', async t => {
 
   await once(bridge, 'aliases-updated')
   t.pass('aliases file rewritten after an entry gets removed')
+
+  t.is(bridge.swarm.connections.size, 0, 'disconnected after expiry')
 })
 
 test('A client does not get removed if it renews before the expiry', async t => {

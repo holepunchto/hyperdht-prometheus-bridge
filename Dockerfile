@@ -1,5 +1,4 @@
 FROM node:20-slim
-RUN apt update && apt install curl -y
 
 RUN useradd --create-home -u 4820 dht-prometheus
 

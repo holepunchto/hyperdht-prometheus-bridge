@@ -17,6 +17,7 @@ function loadConfig () {
     logLevel: (process.env.DHT_PROM_LOG_LEVEL || 'info').toLowerCase(),
     httpPort: process.env.DHT_PROM_HTTP_PORT || 0,
     httpHost: process.env.DHT_PROM_HTTP_HOST || '127.0.0.1',
+    exposeReplSwarm: process.env.DHT_PROM_EXPOSE_REPL_SWARM === 'true',
     _forceFlushOnClientReady: process.env._DHT_PROM_FORCE_FLUSH || 'false' // Tests only
   }
 
@@ -60,6 +61,7 @@ async function main () {
     httpHost,
     keyPairSeed,
     serverLogLevel,
+    exposeReplSwarm,
     _forceFlushOnClientReady
   } = loadConfig()
 
@@ -84,6 +86,16 @@ async function main () {
 
   instrument(swarm, promClient)
   bridge.registerLogger(logger)
+
+  if (exposeReplSwarm === true) {
+    const replSwarm = require('repl-swarm')
+    const seed = replSwarm({ bridge, server })
+    setInterval(
+      () => {
+        logger.info(`REPL swarm available at ${seed}`)
+      }, 60_000 * 60
+    )
+  }
 
   goodbye(async () => {
     logger.info('Shutting down')

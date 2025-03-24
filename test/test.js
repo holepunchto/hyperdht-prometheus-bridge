@@ -22,7 +22,7 @@ test('put alias + lookup happy flow', async t => {
   const baseUrl = await bridge.server.listen({ host: '127.0.0.1', port: 0 })
 
   bridge.putAlias('dummy', dhtPromClient.publicKey)
-  await bridge.swarm.flush() // Avoid race condition
+  await new Promise(resolve => setTimeout(resolve, 1000)) // TODO: use swarm.flush again when bug fixed
 
   const res = await axios.get(
     `${baseUrl}/scrape/dummy/metrics`,
@@ -76,7 +76,7 @@ test('502 with uid if upstream returns success: false', async t => {
 
   const baseUrl = await bridge.server.listen({ host: '127.0.0.1', port: 0 })
   bridge.putAlias('dummy', dhtPromClient.publicKey)
-  await bridge.swarm.flush() // Avoid race condition
+  await new Promise(resolve => setTimeout(resolve, 1000)) // TODO: use swarm.flush again when bug fixed
 
   const res = await axios.get(
     `${baseUrl}/scrape/dummy/metrics`,
@@ -150,7 +150,7 @@ test('A client which registers itself can get scraped', async t => {
 
   const baseUrl = await bridge.server.listen({ host: '127.0.0.1', port: 0 })
 
-  await bridge.swarm.flush() // To avoid race conditions
+  await new Promise(resolve => setTimeout(resolve, 1000)) // TODO: use swarm.flush again when bug fixed
   await dhtPromClient.ready()
 
   const res = await axios.get(
@@ -168,7 +168,7 @@ test('A client which registers itself can get scraped', async t => {
 
 test('A client gets removed and closed after it expires', async t => {
   const { bridge, dhtPromClient } = await setup(t, {
-    entryExpiryMs: 500,
+    entryExpiryMs: 1200,
     checkExpiredsIntervalMs: 100
   })
 
@@ -176,7 +176,8 @@ test('A client gets removed and closed after it expires', async t => {
   await dhtPromClient.ready()
 
   bridge.putAlias('dummy', dhtPromClient.publicKey)
-  await bridge.swarm.flush() // Avoid race condition
+  await new Promise(resolve => setTimeout(resolve, 1000)) // TODO: use swarm.flush again when bug fixed
+
   // Can be 2 if the alias-request connection isn't cleaned up yet
   t.is(bridge.swarm.connections.size > 0, true, 'sanity check: connected')
 

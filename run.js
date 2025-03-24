@@ -17,6 +17,7 @@ function loadConfig () {
     logLevel: (process.env.DHT_PROM_LOG_LEVEL || 'info').toLowerCase(),
     httpPort: process.env.DHT_PROM_HTTP_PORT || 0,
     httpHost: process.env.DHT_PROM_HTTP_HOST || '127.0.0.1',
+    dhtPort: process.env.DHT_PROM_DHT_PORT || 0,
     exposeReplSwarm: process.env.DHT_PROM_EXPOSE_REPL_SWARM === 'true',
     _forceFlushOnClientReady: process.env._DHT_PROM_FORCE_FLUSH || 'false' // Tests only
   }
@@ -59,6 +60,7 @@ async function main () {
     sharedSecret,
     httpPort,
     httpHost,
+    dhtPort,
     keyPairSeed,
     serverLogLevel,
     exposeReplSwarm,
@@ -71,6 +73,7 @@ async function main () {
   // Generates new if seed is undefined
   const keyPair = HyperDht.keyPair(keyPairSeed)
   const swarm = new Hyperswarm({
+    port: dhtPort,
     bootstrap,
     keyPair
   })

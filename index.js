@@ -138,7 +138,9 @@ class PrometheusDhtBridge extends ReadyResource {
     }
 
     if (this._forceFlushOnClientReady && !entry.hasHandledGet) {
-      await entry.scrapeClient.swarm.flush()
+      // TODO: revert back to flushing when bug fixed there
+      // await entry.scrapeClient.swarm.flush()
+      await new Promise(resolve => setTimeout(resolve, 1000))
     }
     entry.hasHandledGet = true
 

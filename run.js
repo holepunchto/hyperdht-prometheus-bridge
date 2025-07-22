@@ -7,6 +7,7 @@ const fastify = require('fastify')
 const idEnc = require('hypercore-id-encoding')
 const goodbye = require('graceful-goodbye')
 const promClient = require('prom-client')
+const ProtomuxRpcClient = require('protomux-rpc-client')
 
 const PrometheusDhtBridge = require('./index')
 const instrument = require('./lib/instrument')
@@ -27,7 +28,7 @@ function loadConfig () {
     : 'warn' // No need to log all metrics requests
 
   try {
-    config.sharedSecret = idEnc.decode(idEnc.normalize(process.env.DHT_PROM_SHARED_SECRET))
+    config.sharedSecret = idEnc.decode(process.env.DHT_PROM_SHARED_SECRET)
   } catch (e) {
     console.error('DHT_PROM_SHARED_SECRET env var must be set to a valid hypercore key')
     process.exit(1)
@@ -77,9 +78,10 @@ async function main () {
     bootstrap,
     keyPair
   })
+  const protomuxRpcClient = new ProtomuxRpcClient(swarm.dht, { keyPair: swarm.keyPair })
 
   const server = fastify({ logger })
-  const bridge = new PrometheusDhtBridge(swarm, server, sharedSecret, {
+  const bridge = new PrometheusDhtBridge(swarm, server, protomuxRpcClient, sharedSecret, {
     keyPairSeed,
     ownPromClient: promClient,
     prometheusTargetsLoc,
@@ -103,6 +105,7 @@ async function main () {
   goodbye(async () => {
     logger.info('Shutting down')
     await server.close()
+    await protomuxRpcClient.close()
     logger.info('Http server shut down--now closing the bridge')
     if (bridge.opened) await bridge.close()
     logger.info('Fully shut down')

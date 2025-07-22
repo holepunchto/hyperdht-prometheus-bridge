@@ -12,6 +12,7 @@ const hypCrypto = require('hypercore-crypto')
 const getTmpDir = require('test-tmp')
 const PrometheusDhtBridge = require('../index')
 const Hyperswarm = require('hyperswarm')
+const ProtomuxRpcClient = require('protomux-rpc-client')
 
 test('put alias + lookup happy flow', async t => {
   const { bridge, dhtPromClient } = await setup(t)
@@ -28,6 +29,7 @@ test('put alias + lookup happy flow', async t => {
     `${baseUrl}/scrape/dummy/metrics`,
     { validateStatus: null }
   )
+
   t.is(res.status, 200, 'correct status')
   t.is(
     res.data.includes('process_cpu_user_seconds_total'),
@@ -91,7 +93,7 @@ test('502 with uid if upstream returns success: false', async t => {
 })
 
 test('502 if upstream unavailable', async t => {
-  const { bridge, dhtPromClient } = await setup(t)
+  const { bridge, dhtPromClient, protomuxRpcClient } = await setup(t)
 
   await dhtPromClient.ready()
   await bridge.ready()
@@ -99,6 +101,7 @@ test('502 if upstream unavailable', async t => {
   const baseUrl = await bridge.server.listen({ host: '127.0.0.1', port: 0 })
   bridge.putAlias('dummy', dhtPromClient.publicKey)
 
+  await protomuxRpcClient.close()
   await dhtPromClient.close()
 
   const res = await axios.get(
@@ -108,8 +111,7 @@ test('502 if upstream unavailable', async t => {
   t.is(res.status, 502, 'correct status')
   t.is(
     res.data,
-    'Upstream unavailable',
-    'uid included in error message'
+    'Upstream unavailable'
   )
 })
 
@@ -126,18 +128,14 @@ test('No new alias if adding same key', async t => {
   bridge.putAlias('dummy', key)
   t.is(clientA, bridge.aliases.get('dummy'), 'no new client')
 
-  t.is(clientA.closed, false, 'sanity check')
   bridge.putAlias('dummy', key2)
   t.not(clientA, bridge.aliases.get('dummy'), 'sanity check')
-  t.is(clientA.closed, true, 'lifecycle ok')
 })
 
 test('A client which registers itself can get scraped', async t => {
   t.plan(4)
 
   const { bridge, dhtPromClient } = await setup(t)
-
-  await bridge.ready()
 
   bridge.aliasRpcServer.on('alias-request', ({ uid, remotePublicKey, alias, targetPublicKey }) => {
     t.is(alias, 'dummy', 'correct alias')
@@ -147,11 +145,15 @@ test('A client which registers itself can get scraped', async t => {
     console.error(error)
     t.fail('unexpected error')
   })
+  await bridge.ready()
 
   const baseUrl = await bridge.server.listen({ host: '127.0.0.1', port: 0 })
 
   await new Promise(resolve => setTimeout(resolve, 1000)) // TODO: use swarm.flush again when bug fixed
-  await dhtPromClient.ready()
+  await Promise.all([
+    dhtPromClient.ready(),
+    once(dhtPromClient, 'register-alias-success')
+  ])
 
   const res = await axios.get(
     `${baseUrl}/scrape/dummy/metrics`,
@@ -180,21 +182,15 @@ test('A client gets removed and closed after it expires', async t => {
 
   // Can be 2 if the alias-request connection isn't cleaned up yet
   t.is(bridge.swarm.connections.size > 0, true, 'sanity check: connected')
-
-  const entry = bridge.aliases.get('dummy')
-
   t.is(bridge.aliases.size, 1, 'sanity check')
 
   const [{ alias: expiredAlias }] = await once(bridge, 'alias-expired')
   t.is(expiredAlias, 'dummy', 'alias-expired event emitted')
 
   t.is(bridge.aliases.size, 0, 'alias removed when expired')
-  t.is(entry.closed, true, 'The alias entry is closed')
 
   await once(bridge, 'aliases-updated')
   t.pass('aliases file rewritten after an entry gets removed')
-
-  t.is(bridge.swarm.connections.size, 0, 'disconnected after expiry')
 })
 
 test('A client does not get removed if it renews before the expiry', async t => {
@@ -212,10 +208,6 @@ test('A client does not get removed if it renews before the expiry', async t => 
     bridge.putAlias('dummy', key)
   }, bridge.entryExpiryMs / 2)
 
-  const entry = bridge.aliases.get('dummy')
-
-  t.is(entry.closed, false, 'sanity check')
-
   t.is(bridge.aliases.size, 1, 'sanity check')
 
   await new Promise(resolve => setTimeout(
@@ -223,14 +215,12 @@ test('A client does not get removed if it renews before the expiry', async t => 
   ))
 
   t.is(bridge.aliases.size, 1, 'alias not removed if renewed in time')
-  t.is(entry.closed, false, 'Sanity check: entry not closed if renewed in time')
 
   await new Promise(resolve => setTimeout(
     resolve, bridge.entryExpiryMs + 100
   ))
 
   t.is(bridge.aliases.size, 0, 'alias removed when expired')
-  t.is(entry.closed, true, 'The alias entry is closed')
 })
 
 async function setup (t, bridgeOpts = {}) {
@@ -243,19 +233,27 @@ async function setup (t, bridgeOpts = {}) {
   const sharedSecret = hypCrypto.randomBytes(32)
 
   const swarm = new Hyperswarm({ bootstrap })
+  const protomuxRpcClient = new ProtomuxRpcClient(swarm.dht, { keyPair: swarm.keyPair })
   const server = fastify({ logger: false })
   const tmpDir = await getTmpDir(t)
   const prometheusTargetsLoc = path.join(tmpDir, 'prom-targets.json')
-  const bridge = new PrometheusDhtBridge(swarm, server, sharedSecret, {
+  const bridge = new PrometheusDhtBridge(swarm, server, protomuxRpcClient, sharedSecret, {
     _forceFlushOnClientReady: true, // to avoid race conditions
     prometheusTargetsLoc,
     ...bridgeOpts
   })
+
+  bridge.on('upstream-error', e => {
+    console.warn(e.stack)
+  })
+
   const scraperPubKey = bridge.publicKey
 
   const dhtClient = new HyperDHT({ bootstrap })
+  const clientProtomuxRpcClient = new ProtomuxRpcClient(dhtClient)
   const dhtPromClient = new DhtPromClient(
     dhtClient,
+    clientProtomuxRpcClient,
     promClient,
     scraperPubKey,
     'dummy',
@@ -263,10 +261,15 @@ async function setup (t, bridgeOpts = {}) {
     'my-service',
     { bootstrap, hostname: 'my-hostname' }
   )
+  dhtPromClient.on('register-alias-error', e => {
+    console.warn(e.stack)
+  })
 
   t.teardown(async () => {
     await server.close()
     await bridge.close()
+    await protomuxRpcClient.close()
+    await clientProtomuxRpcClient.close()
     await dhtPromClient.close()
     await swarm.destroy()
     await testnet.destroy()
@@ -274,5 +277,5 @@ async function setup (t, bridgeOpts = {}) {
   })
 
   const ownPublicKey = dhtPromClient.dht.defaultKeyPair.publicKey
-  return { dhtPromClient, bridge, bootstrap, ownPublicKey }
+  return { dhtPromClient, bridge, bootstrap, ownPublicKey, protomuxRpcClient }
 }

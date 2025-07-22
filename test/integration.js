@@ -13,6 +13,7 @@ const DhtPromClient = require('dht-prom-client')
 const HyperDHT = require('hyperdht')
 const z32 = require('z32')
 const axios = require('axios')
+const ProtomuxRpcClient = require('protomux-rpc-client')
 
 const BRIDGE_EXECUTABLE = path.join(path.dirname(__dirname), 'run.js')
 const PROMETHEUS_EXECUTABLE = path.join(path.dirname(__dirname), 'prometheus', 'prometheus')
@@ -283,6 +284,9 @@ test('Integration test, happy path', async t => {
         }
 
         // Note: Small chance of false positive if another req id starts the same
+        // Note: for requests that take long (due to the flush hack for tests),
+        // the log for the resolved request does not come through, so reduce the flush
+        // timeout if that happens
         const secondClientScraped = secondClientScrapeReqId !== null
         if (secondClientScraped && line.includes(secondClientScrapeReqId) && line.includes('"statusCode":200')) {
           tClient2GotScraped.pass('Scraped successfully (client2)')
@@ -325,8 +329,10 @@ test('Integration test, happy path', async t => {
 
 function getClient (t, bootstrap, scraperPubKey, sharedSecret, { name = 'dummy' } = {}) {
   const dhtClient = new HyperDHT({ bootstrap })
+  const rpcClient = new ProtomuxRpcClient(dhtClient)
   const dhtPromClient = new DhtPromClient(
     dhtClient,
+    rpcClient,
     promClient,
     idEnc.decode(scraperPubKey),
     name,
@@ -336,6 +342,7 @@ function getClient (t, bootstrap, scraperPubKey, sharedSecret, { name = 'dummy' 
   )
 
   t.teardown(async () => {
+    await rpcClient.close()
     await dhtPromClient.close()
     // TODO: investigate why this takes a few sec
   }, 1)

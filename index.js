@@ -11,7 +11,7 @@ const debounceify = require('debounceify')
 const DEFAULT_PROM_TARGETS_LOC = './targets.json'
 
 class PrometheusDhtBridge extends ReadyResource {
-  constructor (swarm, server, sharedSecret, {
+  constructor (swarm, server, protomuxRpcClient, sharedSecret, {
     ownPromClient,
     _forceFlushOnClientReady = false,
     prometheusTargetsLoc = DEFAULT_PROM_TARGETS_LOC,
@@ -21,8 +21,16 @@ class PrometheusDhtBridge extends ReadyResource {
   } = {}) {
     super()
 
+    if (!protomuxRpcClient.keyPair || !b4a.equals(swarm.keyPair.publicKey, protomuxRpcClient.keyPair.publicKey)) {
+      // This keeps our authentication easy: services which register to the
+      // scraper simply need to check that its public key is the same key they
+      // contacted to register themselves (relying on the keypair authentication)
+      throw new Error('The protomux-rpc-client keyPair option should be set to the swarm keyPair')
+    }
+
     this.swarm = swarm
     this.secret = sharedSecret // Shared with clients
+    this.protomuxRpcClient = protomuxRpcClient
 
     this.entryExpiryMs = entryExpiryMs
     this.checkExpiredsIntervalMs = checkExpiredsIntervalMs
@@ -70,7 +78,6 @@ class PrometheusDhtBridge extends ReadyResource {
     // otherwise the old aliases might get overwritten
     await this._loadAliases()
     await this.swarm.listen()
-
     this._checkExpiredsInterval = setInterval(
       () => this.cleanupExpireds(),
       this.checkExpiredsIntervalMs
@@ -83,9 +90,10 @@ class PrometheusDhtBridge extends ReadyResource {
       clearInterval(this._checkExpiredsInterval)
     }
 
-    for (const entry of this.aliases.values()) {
-      entry.close()
-    }
+    // DEVNOTE: no need to close the entries explicitly
+    // since they have no state, but we could consider
+    // exposing a force-close at protomux-rpc-client level
+    // to clean up the open connections rather than rely on the gc
 
     await this.swarm.destroy()
 
@@ -104,12 +112,10 @@ class PrometheusDhtBridge extends ReadyResource {
         const updated = false // Idempotent
         return updated
       }
-
-      current.close()
     }
 
     const entry = new AliasesEntry(
-      new ScraperClient(this.swarm, targetPubKey),
+      new ScraperClient(this.protomuxRpcClient, targetPubKey),
       hostname,
       service,
       Date.now() + this.entryExpiryMs
@@ -140,7 +146,7 @@ class PrometheusDhtBridge extends ReadyResource {
     if (this._forceFlushOnClientReady && !entry.hasHandledGet) {
       // TODO: revert back to flushing when bug fixed there
       // await entry.scrapeClient.swarm.flush()
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      await new Promise(resolve => setTimeout(resolve, 250))
     }
     entry.hasHandledGet = true
 
@@ -200,7 +206,6 @@ class PrometheusDhtBridge extends ReadyResource {
     for (const alias of toRemove) {
       const entry = this.aliases.get(alias)
       this.aliases.delete(alias)
-      entry.close()
       this.emit('alias-expired', { publicKey: entry.targetKey, alias })
     }
 
@@ -216,22 +221,6 @@ class PrometheusDhtBridge extends ReadyResource {
       const { service, hostname } = entry
 
       logger.info(`Registered alias: ${alias} -> ${idEnc.normalize(publicKey)} (${service} on host ${hostname})`)
-
-      scrapeClient.on('connection-open', ({ uid, remotePublicKey, remoteAddress }) => {
-        logger.info(`Scraper for ${alias}->${idEnc.normalize(remotePublicKey)} opened connection to ${remoteAddress} (uid: ${uid})`)
-      })
-      scrapeClient.on('connection-close', ({ uid, remotePublicKey, remoteAddress }) => {
-        logger.info(`Scraper for ${alias}->${idEnc.normalize(remotePublicKey)} closed connection to ${remoteAddress} (uid: ${uid})`)
-      })
-      scrapeClient.on('connection-error', ({ error, uid, remotePublicKey, remoteAddress }) => {
-        logger.info(`Scraper for ${alias}->${idEnc.normalize(remotePublicKey)} at ${remoteAddress} connection error (uid: ${uid}): ${error.stack}`)
-      })
-
-      if (logger.level === 'debug') {
-        scrapeClient.on('connection-ignore', ({ uid, remotePublicKey, remoteAddress }) => {
-          logger.debug(`Scraper for ${alias}->${idEnc.normalize(remotePublicKey)} at ${remoteAddress} ignored connection (uid: ${uid})`)
-        })
-      }
     })
 
     this.on('aliases-updated', (loc) => {
@@ -266,12 +255,6 @@ class AliasesEntry {
     this.service = service
     this.expiry = expiry
     this.hasHandledGet = false
-
-    this.scrapeClient.ready()
-  }
-
-  get closed () {
-    return this.scrapeClient.closed
   }
 
   get targetKey () {
@@ -284,10 +267,6 @@ class AliasesEntry {
 
   setExpiry (expiry) {
     this.expiry = expiry
-  }
-
-  close () {
-    this.scrapeClient.close()
   }
 }
 

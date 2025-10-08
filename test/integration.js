@@ -332,13 +332,12 @@ function getClient (t, bootstrap, scraperPubKey, sharedSecret, { name = 'dummy' 
   const rpcClient = new ProtomuxRpcClient(dhtClient)
   const dhtPromClient = new DhtPromClient(
     dhtClient,
-    rpcClient,
     promClient,
     idEnc.decode(scraperPubKey),
     name,
     sharedSecret,
     'my-service',
-    { bootstrap, hostname: 'my-hostname' }
+    { bootstrap, hostname: 'my-hostname', protomuxRpcClient: rpcClient }
   )
 
   t.teardown(async () => {

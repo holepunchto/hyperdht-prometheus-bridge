@@ -253,13 +253,12 @@ async function setup (t, bridgeOpts = {}) {
   const clientProtomuxRpcClient = new ProtomuxRpcClient(dhtClient)
   const dhtPromClient = new DhtPromClient(
     dhtClient,
-    clientProtomuxRpcClient,
     promClient,
     scraperPubKey,
     'dummy',
     sharedSecret,
     'my-service',
-    { bootstrap, hostname: 'my-hostname' }
+    { bootstrap, hostname: 'my-hostname', clientProtomuxRpcClient }
   )
   dhtPromClient.on('register-alias-error', e => {
     console.warn(e.stack)

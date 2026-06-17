@@ -61,3 +61,8 @@ npm run integration
 ```
 
 Note: the integration tests run [./prep-integration-test.sh](./prep-integration-test.sh), which downloads Prometheus and copies the executable to the ./prometheus directory.
+
+## Fork
+
+Forked on 2026-06-17 from https://gitlab.com/dcent-tech/dht-prometheus/,
+licensed under Apache-2.0. See NOTICE.

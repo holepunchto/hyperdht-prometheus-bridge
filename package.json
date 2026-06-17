@@ -1,5 +1,5 @@
 {
-  "name": "dht-prometheus",
+  "name": "hyper-dht-prometheus",
   "version": "2.0.1",
   "description": "Bridge to scrape Prometheus metrics fully peer to peer",
   "main": "index.js",
@@ -8,11 +8,11 @@
     "integration": "./prep-integration-test.sh && brittle test/integration.js"
   },
   "bin": {
-    "dht-prometheus": "./run.js"
+    "hyper-dht-prometheus": "./run.js"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://gitlab.com/dcent-tech/dht-prometheus.git"
+    "url": "git+https://github.com/holepunchto/hyper-dht-prometheus.git"
   },
   "keywords": [
     "Prometheus",
@@ -21,12 +21,12 @@
     "peer-to-peer",
     "p2p"
   ],
-  "author": "H. Degroote",
+  "author": "Holepunch Inc",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://gitlab.com/dcent-tech/dht-prometheus/issues"
+    "url": "https://github.com/holepunchto/hyper-dht-prometheus/issues"
   },
-  "homepage": "https://gitlab.com/dcent-tech/dht-prometheus#readme",
+  "homepage": "https://github.com/holepunchto/hyper-dht-prometheus#readme",
   "devDependencies": {
     "axios": "^1.7.2",
     "brittle": "^3.5.2",

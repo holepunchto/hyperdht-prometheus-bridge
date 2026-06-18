@@ -12,9 +12,10 @@ const ProtomuxRpcClient = require('protomux-rpc-client')
 const PrometheusDhtBridge = require('./index')
 const instrument = require('./lib/instrument')
 
-function loadConfig () {
+function loadConfig() {
   const config = {
-    prometheusTargetsLoc: process.env.DHT_PROM_PROMETHEUS_TARGETS_LOC || './prometheus/targets.json',
+    prometheusTargetsLoc:
+      process.env.DHT_PROM_PROMETHEUS_TARGETS_LOC || './prometheus/targets.json',
     logLevel: (process.env.DHT_PROM_LOG_LEVEL || 'info').toLowerCase(),
     httpPort: parseInt(process.env.DHT_PROM_HTTP_PORT || 0),
     httpHost: process.env.DHT_PROM_HTTP_HOST || '127.0.0.1',
@@ -23,9 +24,7 @@ function loadConfig () {
     _forceFlushOnClientReady: process.env._DHT_PROM_FORCE_FLUSH || 'false' // Tests only
   }
 
-  config.serverLogLevel = config.logLevel === 'debug'
-    ? 'info'
-    : 'warn' // No need to log all metrics requests
+  config.serverLogLevel = config.logLevel === 'debug' ? 'info' : 'warn' // No need to log all metrics requests
 
   try {
     config.sharedSecret = idEnc.decode(process.env.DHT_PROM_SHARED_SECRET)
@@ -43,17 +42,20 @@ function loadConfig () {
     }
   }
 
-  if (process.env.DHT_PROM_BOOTSTRAP_PORT) { // For tests
-    config.bootstrap = [{
-      port: parseInt(process.env.DHT_PROM_BOOTSTRAP_PORT),
-      host: '127.0.0.1'
-    }]
+  if (process.env.DHT_PROM_BOOTSTRAP_PORT) {
+    // For tests
+    config.bootstrap = [
+      {
+        port: parseInt(process.env.DHT_PROM_BOOTSTRAP_PORT),
+        host: '127.0.0.1'
+      }
+    ]
   }
 
   return config
 }
 
-async function main () {
+async function main() {
   const {
     bootstrap,
     logLevel,
@@ -95,11 +97,9 @@ async function main () {
   if (exposeReplSwarm === true) {
     const replSwarm = require('repl-swarm')
     const seed = replSwarm({ bridge, server })
-    setInterval(
-      () => {
-        logger.info(`REPL swarm available at ${seed}`)
-      }, 60_000 * 60
-    )
+    setInterval(() => {
+      logger.info(`REPL swarm available at ${seed}`)
+    }, 60_000 * 60)
   }
 
   goodbye(async () => {

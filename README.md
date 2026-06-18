@@ -11,8 +11,9 @@ An advantage is the small amount of configuration required. [Clients](https://gi
 DHT-Prometheus is meant to be deployed alongside Prometheus. It manages a single `targets.json` file referenced from the main prometheus configuration (See [prometheus/prometheus.yml](prometheus/prometheus.yml) for an example).
 
 The DHT-prometheus service fulfils two complementary roles:
- - It maintains a `targets.json` file with aliases to all services which Prometheus should scrape.
- - It provides an HTTP server which receives Prometheus requests and forwards them to the DHT-prom clients.
+
+- It maintains a `targets.json` file with aliases to all services which Prometheus should scrape.
+- It provides an HTTP server which receives Prometheus requests and forwards them to the DHT-prom clients.
 
 ### Run
 
@@ -39,11 +40,13 @@ Note: `--network=host` is optional, but HyperDHT holepunching can struggle using
 #### CLI
 
 Install:
+
 ```
 npm i -g dht-prometheus
 ```
 
 Run:
+
 ```
 DHT_PROM_PROMETHEUS_TARGETS_LOC=path/to/prometheus/targets.json DHT_PROM_HTTP_PORT=30000 DHT_PROM_SHARED_SECRET=<A 64 character hex string> dht-prometheus
 ```

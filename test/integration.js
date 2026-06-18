@@ -25,7 +25,7 @@ const DEBUG_PROMETHEUS = false
 process.prependListener('SIGINT', () => process.exit(1))
 process.prependListener('SIGTERM', () => process.exit(1))
 
-test('Integration test, happy path', async t => {
+test('Integration test, happy path', async (t) => {
   t.timeout(120_000) // ~20s expected
 
   if (!fs.existsSync(PROMETHEUS_EXECUTABLE)) {
@@ -85,13 +85,9 @@ test('Integration test, happy path', async t => {
     DHT_PROM_LOG_LEVEL: 'debug'
   }
 
-  const firstBridgeProc = spawn(
-    process.execPath,
-    [BRIDGE_EXECUTABLE],
-    {
-      env: bridgeEnvVars
-    }
-  )
+  const firstBridgeProc = spawn(process.execPath, [BRIDGE_EXECUTABLE], {
+    env: bridgeEnvVars
+  })
 
   // To avoid zombie processes in case there's an error
   process.on('exit', () => {
@@ -99,7 +95,7 @@ test('Integration test, happy path', async t => {
     firstBridgeProc.kill('SIGKILL')
   })
 
-  firstBridgeProc.stderr.on('data', d => {
+  firstBridgeProc.stderr.on('data', (d) => {
     console.error(d.toString())
     t.fail('There should be no stderr')
   })
@@ -112,7 +108,7 @@ test('Integration test, happy path', async t => {
   let gotScrapedOnceSuccessfully = false
   {
     const stdoutDec = new NewlineDecoder('utf-8')
-    firstBridgeProc.stdout.on('data', async d => {
+    firstBridgeProc.stdout.on('data', async (d) => {
       if (DEBUG) console.log(d.toString())
 
       for (const line of stdoutDec.push(d)) {
@@ -158,7 +154,7 @@ test('Integration test, happy path', async t => {
   // 2) Setting up a client
   {
     const client = getClient(t, testnet.bootstrap, scraperPubKey, sharedSecret)
-    client.on('register-alias-error', e => {
+    client.on('register-alias-error', (e) => {
       console.error(e)
       t.fail('Error when client tried to register alias')
     })
@@ -170,16 +166,20 @@ test('Integration test, happy path', async t => {
   const res = await axios.get(`${bridgeHttpAddress}/metrics`)
   t.is(res.status, 200, 'can scrape own metrics')
   t.is(res.data.includes('nodejs_eventloop_lag_mean_seconds'), true, 'sanity check')
-  t.is(res.data.includes('hyperswarm_server_connections_opened'), true, 'Own metrics include swarm metrics')
+  t.is(
+    res.data.includes('hyperswarm_server_connections_opened'),
+    true,
+    'Own metrics include swarm metrics'
+  )
 
   // 3) Setup prometheus
   const promConfigFileLoc = path.join(tmpDir, 'prometheus.yml')
   await writePromConfig(promConfigFileLoc, bridgeHttpAddress, promTargetsLoc)
 
-  const promProc = spawn(
-    PROMETHEUS_EXECUTABLE,
-    [`--config.file=${promConfigFileLoc}`, '--log.level=debug']
-  )
+  const promProc = spawn(PROMETHEUS_EXECUTABLE, [
+    `--config.file=${promConfigFileLoc}`,
+    '--log.level=debug'
+  ])
 
   // To avoid zombie processes in case there's an error
   process.on('exit', () => {
@@ -192,7 +192,7 @@ test('Integration test, happy path', async t => {
     // Prometheus logs everything to stderr, so we listen to that
     let confirmedBridgeOffline = false
 
-    promProc.stderr.on('data', d => {
+    promProc.stderr.on('data', (d) => {
       if (DEBUG_PROMETHEUS) console.log('PROMETHEUS', d.toString())
 
       for (const line of stdoutDec.push(d)) {
@@ -200,7 +200,11 @@ test('Integration test, happy path', async t => {
           tPromReady.pass('Prometheus ready')
         }
 
-        if (gotScrapedOnceSuccessfully && !confirmedBridgeOffline && line.includes('msg="Scrape failed"')) {
+        if (
+          gotScrapedOnceSuccessfully &&
+          !confirmedBridgeOffline &&
+          line.includes('msg="Scrape failed"')
+        ) {
           // Note: could in theory also fail for other reasons
           tPromFailedToScrape.pass('The bridge is no longer available')
           confirmedBridgeOffline = true
@@ -223,16 +227,12 @@ test('Integration test, happy path', async t => {
   await tPromFailedToScrape // Make sure prom knows the bridge is offline
 
   // b) Restart bridge
-  const restartedBridgeProc = spawn(
-    process.execPath,
-    [BRIDGE_EXECUTABLE],
-    {
-      env: {
-        ...bridgeEnvVars,
-        DHT_PROM_HTTP_PORT: bridgeHttpPort // Reused to simplify the test (we ignore the small chance that the port is already used by another process)
-      }
+  const restartedBridgeProc = spawn(process.execPath, [BRIDGE_EXECUTABLE], {
+    env: {
+      ...bridgeEnvVars,
+      DHT_PROM_HTTP_PORT: bridgeHttpPort // Reused to simplify the test (we ignore the small chance that the port is already used by another process)
     }
-  )
+  })
 
   // To avoid zombie processes in case there's an error
   process.on('exit', () => {
@@ -240,7 +240,7 @@ test('Integration test, happy path', async t => {
     restartedBridgeProc.kill('SIGKILL')
   })
 
-  restartedBridgeProc.stderr.on('data', d => {
+  restartedBridgeProc.stderr.on('data', (d) => {
     console.error(d.toString())
     t.fail('There should be no stderr')
   })
@@ -256,7 +256,7 @@ test('Integration test, happy path', async t => {
     let secondClientScrapeReqId = null
 
     const stdoutDec = new NewlineDecoder('utf-8')
-    restartedBridgeProc.stdout.on('data', async d => {
+    restartedBridgeProc.stdout.on('data', async (d) => {
       if (DEBUG) console.log(d.toString())
 
       for (const line of stdoutDec.push(d)) {
@@ -279,7 +279,9 @@ test('Integration test, happy path', async t => {
         }
 
         if (!secondClientScrapeReqId && line.includes('secondummy/metrics')) {
-          tClient2GotScraped.pass('Scrape req received for client2 (prometheus config got reloaded)')
+          tClient2GotScraped.pass(
+            'Scrape req received for client2 (prometheus config got reloaded)'
+          )
           secondClientScrapeReqId = JSON.parse(line).reqId
         }
 
@@ -288,7 +290,11 @@ test('Integration test, happy path', async t => {
         // the log for the resolved request does not come through, so reduce the flush
         // timeout if that happens
         const secondClientScraped = secondClientScrapeReqId !== null
-        if (secondClientScraped && line.includes(secondClientScrapeReqId) && line.includes('"statusCode":200')) {
+        if (
+          secondClientScraped &&
+          line.includes(secondClientScrapeReqId) &&
+          line.includes('"statusCode":200')
+        ) {
           tClient2GotScraped.pass('Scraped successfully (client2)')
         }
       }
@@ -299,15 +305,11 @@ test('Integration test, happy path', async t => {
 
   // 5) Add another client
   {
-    const client2 = getClient(
-      t,
-      testnet.bootstrap,
-      scraperPubKey,
-      sharedSecret,
-      { name: 'secondummy' }
-    )
+    const client2 = getClient(t, testnet.bootstrap, scraperPubKey, sharedSecret, {
+      name: 'secondummy'
+    })
 
-    client2.on('register-alias-error', e => {
+    client2.on('register-alias-error', (e) => {
       console.error(e)
       t.fail('Error when client tried to register alias')
     })
@@ -317,7 +319,7 @@ test('Integration test, happy path', async t => {
   await tAlias2Req
   await tClient2GotScraped
 
-  const promClosed = new Promise(resolve => {
+  const promClosed = new Promise((resolve) => {
     promProc.on('close', resolve)
   })
   promProc.kill('SIGTERM')
@@ -327,7 +329,7 @@ test('Integration test, happy path', async t => {
   await Promise.all([tRestartedBridgeShutdown, promClosed])
 })
 
-function getClient (t, bootstrap, scraperPubKey, sharedSecret, { name = 'dummy' } = {}) {
+function getClient(t, bootstrap, scraperPubKey, sharedSecret, { name = 'dummy' } = {}) {
   const dhtClient = new HyperDHT({ bootstrap })
   const rpcClient = new ProtomuxRpcClient(dhtClient)
   const dhtPromClient = new DhtPromClient(
@@ -349,7 +351,7 @@ function getClient (t, bootstrap, scraperPubKey, sharedSecret, { name = 'dummy' 
   return dhtPromClient
 }
 
-async function writePromConfig (loc, bridgeHttpAddress, promTargetsLoc) {
+async function writePromConfig(loc, bridgeHttpAddress, promTargetsLoc) {
   bridgeHttpAddress = bridgeHttpAddress.split('://')[1] // Get rid of http://
 
   const content = `

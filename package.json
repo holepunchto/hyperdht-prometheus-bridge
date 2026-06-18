@@ -4,7 +4,9 @@
   "description": "Bridge to scrape Prometheus metrics fully peer to peer",
   "main": "index.js",
   "scripts": {
-    "test": "standard && brittle test/test.js",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "npm run format:check && lunte && brittle test/test.js",
     "integration": "./prep-integration-test.sh && brittle test/integration.js"
   },
   "bin": {
@@ -32,8 +34,10 @@
     "brittle": "^3.5.2",
     "hypercore-crypto": "^3.4.2",
     "hyperdht": "^6.15.1",
+    "lunte": "^1.8.0",
     "newline-decoder": "^1.0.2",
-    "standard": "^17.1.0",
+    "prettier": "^3.8.4",
+    "prettier-config-holepunch": "^2.0.0",
     "test-tmp": "^1.2.1",
     "z32": "^1.1.0"
   },

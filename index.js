@@ -11,17 +11,26 @@ const debounceify = require('debounceify')
 const DEFAULT_PROM_TARGETS_LOC = './targets.json'
 
 class PrometheusDhtBridge extends ReadyResource {
-  constructor (swarm, server, protomuxRpcClient, sharedSecret, {
-    ownPromClient,
-    _forceFlushOnClientReady = false,
-    prometheusTargetsLoc = DEFAULT_PROM_TARGETS_LOC,
-    entryExpiryMs = 3 * 60 * 60 * 1000,
-    checkExpiredsIntervalMs = 60 * 60 * 1000,
-    serverLogLevel = 'warn'
-  } = {}) {
+  constructor(
+    swarm,
+    server,
+    protomuxRpcClient,
+    sharedSecret,
+    {
+      ownPromClient,
+      _forceFlushOnClientReady = false,
+      prometheusTargetsLoc = DEFAULT_PROM_TARGETS_LOC,
+      entryExpiryMs = 3 * 60 * 60 * 1000,
+      checkExpiredsIntervalMs = 60 * 60 * 1000,
+      serverLogLevel = 'warn'
+    } = {}
+  ) {
     super()
 
-    if (!protomuxRpcClient.keyPair || !b4a.equals(swarm.keyPair.publicKey, protomuxRpcClient.keyPair.publicKey)) {
+    if (
+      !protomuxRpcClient.keyPair ||
+      !b4a.equals(swarm.keyPair.publicKey, protomuxRpcClient.keyPair.publicKey)
+    ) {
       // This keeps our authentication easy: services which register to the
       // scraper simply need to check that its public key is the same key they
       // contacted to register themselves (relying on the keypair authentication)
@@ -45,14 +54,10 @@ class PrometheusDhtBridge extends ReadyResource {
 
     ownPromClient = ownPromClient || null
     if (ownPromClient) {
-      this.server.get(
-        '/metrics',
-        { logLevel: serverLogLevel },
-        async function (req, reply) {
-          const metrics = await ownPromClient.register.metrics()
-          reply.send(metrics)
-        }
-      )
+      this.server.get('/metrics', { logLevel: serverLogLevel }, async function (req, reply) {
+        const metrics = await ownPromClient.register.metrics()
+        reply.send(metrics)
+      })
     }
 
     this.promTargetsLoc = prometheusTargetsLoc
@@ -65,15 +70,15 @@ class PrometheusDhtBridge extends ReadyResource {
     this._forceFlushOnClientReady = _forceFlushOnClientReady
   }
 
-  get dht () {
+  get dht() {
     return this.swarm.dht
   }
 
-  get publicKey () {
+  get publicKey() {
     return this.swarm.keyPair.publicKey
   }
 
-  async _open () {
+  async _open() {
     // It is important that the aliases are first loaded
     // otherwise the old aliases might get overwritten
     await this._loadAliases()
@@ -84,7 +89,7 @@ class PrometheusDhtBridge extends ReadyResource {
     )
   }
 
-  async _close () {
+  async _close() {
     // Should be first (no expireds cleanup during closing)
     if (this._checkExpiredsInterval) {
       clearInterval(this._checkExpiredsInterval)
@@ -100,7 +105,7 @@ class PrometheusDhtBridge extends ReadyResource {
     if (this.opened) await this._writeAliases()
   }
 
-  putAlias (alias, targetPubKey, hostname, service, { write = true } = {}) {
+  putAlias(alias, targetPubKey, hostname, service, { write = true } = {}) {
     if (!this.opened && write) throw new Error('Cannot put aliases before ready')
 
     targetPubKey = idEnc.decode(idEnc.normalize(targetPubKey))
@@ -132,7 +137,7 @@ class PrometheusDhtBridge extends ReadyResource {
     return updated
   }
 
-  async _handleGet (req, reply) {
+  async _handleGet(req, reply) {
     const alias = req.params.alias
 
     const entry = this.aliases.get(alias)
@@ -146,7 +151,7 @@ class PrometheusDhtBridge extends ReadyResource {
     if (this._forceFlushOnClientReady && !entry.hasHandledGet) {
       // TODO: revert back to flushing when bug fixed there
       // await entry.scrapeClient.swarm.flush()
-      await new Promise(resolve => setTimeout(resolve, 250))
+      await new Promise((resolve) => setTimeout(resolve, 250))
     }
     entry.hasHandledGet = true
 
@@ -170,7 +175,8 @@ class PrometheusDhtBridge extends ReadyResource {
     }
   }
 
-  async _writeAliasesUndebounced () { // should never throw
+  async _writeAliasesUndebounced() {
+    // should never throw
     try {
       await writePromTargets(this.promTargetsLoc, this.aliases)
       this.emit('aliases-updated', this.promTargetsLoc)
@@ -179,7 +185,8 @@ class PrometheusDhtBridge extends ReadyResource {
     }
   }
 
-  async _loadAliases () { // should never throw
+  async _loadAliases() {
+    // should never throw
     try {
       const aliases = await readPromTargets(this.promTargetsLoc)
 
@@ -197,7 +204,7 @@ class PrometheusDhtBridge extends ReadyResource {
   }
 
   // Should be kept sync (or think hard)
-  cleanupExpireds () {
+  cleanupExpireds() {
     const toRemove = []
     for (const [alias, entry] of this.aliases) {
       if (entry.isExpired) toRemove.push(alias)
@@ -214,13 +221,15 @@ class PrometheusDhtBridge extends ReadyResource {
     }
   }
 
-  registerLogger (logger) {
+  registerLogger(logger) {
     this.on('set-alias', ({ alias, entry }) => {
       const scrapeClient = entry.scrapeClient
       const publicKey = scrapeClient.targetKey
       const { service, hostname } = entry
 
-      logger.info(`Registered alias: ${alias} -> ${idEnc.normalize(publicKey)} (${service} on host ${hostname})`)
+      logger.info(
+        `Registered alias: ${alias} -> ${idEnc.normalize(publicKey)} (${service} on host ${hostname})`
+      )
     })
 
     this.on('aliases-updated', (loc) => {
@@ -231,16 +240,16 @@ class PrometheusDhtBridge extends ReadyResource {
       logger.info(`Alias entry expired: ${alias} -> ${idEnc.normalize(publicKey)}`)
     })
 
-    this.on('load-aliases-error', e => {
+    this.on('load-aliases-error', (e) => {
       // Expected first time the service starts (creates it then)
       logger.error(`failed to load aliases file: ${e.stack}`)
     })
 
-    this.on('upstream-error', e => {
+    this.on('upstream-error', (e) => {
       logger.info(`upstream error: ${e.stack}`)
     })
 
-    this.on('write-aliases-error', e => {
+    this.on('write-aliases-error', (e) => {
       logger.error(`Failed to write aliases file ${e.stack}`)
     })
 
@@ -249,7 +258,7 @@ class PrometheusDhtBridge extends ReadyResource {
 }
 
 class AliasesEntry {
-  constructor (scrapeClient, hostname, service, expiry) {
+  constructor(scrapeClient, hostname, service, expiry) {
     this.scrapeClient = scrapeClient
     this.hostname = hostname
     this.service = service
@@ -257,15 +266,15 @@ class AliasesEntry {
     this.hasHandledGet = false
   }
 
-  get targetKey () {
+  get targetKey() {
     return this.scrapeClient.targetKey
   }
 
-  get isExpired () {
+  get isExpired() {
     return this.expiry < Date.now()
   }
 
-  setExpiry (expiry) {
+  setExpiry(expiry) {
     this.expiry = expiry
   }
 }

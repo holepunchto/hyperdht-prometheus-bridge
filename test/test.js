@@ -14,7 +14,7 @@ const PrometheusDhtBridge = require('../index')
 const Hyperswarm = require('hyperswarm')
 const ProtomuxRpcClient = require('protomux-rpc-client')
 
-test('put alias + lookup happy flow', async t => {
+test('put alias + lookup happy flow', async (t) => {
   const { bridge, dhtPromClient } = await setup(t)
 
   await dhtPromClient.ready()
@@ -23,47 +23,34 @@ test('put alias + lookup happy flow', async t => {
   const baseUrl = await bridge.server.listen({ host: '127.0.0.1', port: 0 })
 
   bridge.putAlias('dummy', dhtPromClient.publicKey)
-  await new Promise(resolve => setTimeout(resolve, 1000)) // TODO: use swarm.flush again when bug fixed
+  await new Promise((resolve) => setTimeout(resolve, 1000)) // TODO: use swarm.flush again when bug fixed
 
-  const res = await axios.get(
-    `${baseUrl}/scrape/dummy/metrics`,
-    { validateStatus: null }
-  )
+  const res = await axios.get(`${baseUrl}/scrape/dummy/metrics`, { validateStatus: null })
 
   t.is(res.status, 200, 'correct status')
-  t.is(
-    res.data.includes('process_cpu_user_seconds_total'),
-    true,
-    'Successfully scraped metrics'
-  )
+  t.is(res.data.includes('process_cpu_user_seconds_total'), true, 'Successfully scraped metrics')
 })
 
-test('404 on unknown alias', async t => {
+test('404 on unknown alias', async (t) => {
   const { bridge } = await setup(t)
 
   await bridge.ready()
 
   const baseUrl = await bridge.server.listen({ host: '127.0.0.1', port: 0 })
 
-  const res = await axios.get(
-    `${baseUrl}/scrape/nothinghere/metrics`,
-    { validateStatus: null }
-  )
+  const res = await axios.get(`${baseUrl}/scrape/nothinghere/metrics`, { validateStatus: null })
   t.is(res.status, 404, 'correct status')
-  t.is(
-    res.data.includes('Unknown alias'),
-    true,
-    'Sensible err msg'
-  )
+  t.is(res.data.includes('Unknown alias'), true, 'Sensible err msg')
 })
 
-test('502 with uid if upstream returns success: false', async t => {
+test('502 with uid if upstream returns success: false', async (t) => {
   const { bridge, dhtPromClient } = await setup(t)
 
-  new promClient.Gauge({ // eslint-disable-line no-new
+  new promClient.Gauge({
+    // eslint-disable-line no-new
     name: 'broken_metric',
     help: 'A metric which throws on collecting it',
-    collect () {
+    collect() {
       throw new Error('I break stuff')
     }
   })
@@ -78,21 +65,14 @@ test('502 with uid if upstream returns success: false', async t => {
 
   const baseUrl = await bridge.server.listen({ host: '127.0.0.1', port: 0 })
   bridge.putAlias('dummy', dhtPromClient.publicKey)
-  await new Promise(resolve => setTimeout(resolve, 1000)) // TODO: use swarm.flush again when bug fixed
+  await new Promise((resolve) => setTimeout(resolve, 1000)) // TODO: use swarm.flush again when bug fixed
 
-  const res = await axios.get(
-    `${baseUrl}/scrape/dummy/metrics`,
-    { validateStatus: null }
-  )
+  const res = await axios.get(`${baseUrl}/scrape/dummy/metrics`, { validateStatus: null })
   t.is(res.status, 502, 'correct status')
-  t.is(
-    res.data.includes(reqUid),
-    true,
-    'uid included in error message'
-  )
+  t.is(res.data.includes(reqUid), true, 'uid included in error message')
 })
 
-test('502 if upstream unavailable', async t => {
+test('502 if upstream unavailable', async (t) => {
   const { bridge, dhtPromClient, protomuxRpcClient } = await setup(t)
 
   await dhtPromClient.ready()
@@ -104,18 +84,12 @@ test('502 if upstream unavailable', async t => {
   await protomuxRpcClient.close()
   await dhtPromClient.close()
 
-  const res = await axios.get(
-    `${baseUrl}/scrape/dummy/metrics`,
-    { validateStatus: null }
-  )
+  const res = await axios.get(`${baseUrl}/scrape/dummy/metrics`, { validateStatus: null })
   t.is(res.status, 502, 'correct status')
-  t.is(
-    res.data,
-    'Upstream unavailable'
-  )
+  t.is(res.data, 'Upstream unavailable')
 })
 
-test('No new alias if adding same key', async t => {
+test('No new alias if adding same key', async (t) => {
   const { bridge } = await setup(t)
   const key = 'a'.repeat(64)
   const key2 = 'b'.repeat(64)
@@ -124,7 +98,7 @@ test('No new alias if adding same key', async t => {
   bridge.putAlias('dummy', key)
   const clientA = bridge.aliases.get('dummy')
 
-  t.is(clientA != null, true, 'sanity check')
+  t.is(clientA !== null, true, 'sanity check')
   bridge.putAlias('dummy', key)
   t.is(clientA, bridge.aliases.get('dummy'), 'no new client')
 
@@ -132,12 +106,12 @@ test('No new alias if adding same key', async t => {
   t.not(clientA, bridge.aliases.get('dummy'), 'sanity check')
 })
 
-test('A client which registers itself can get scraped', async t => {
+test('A client which registers itself can get scraped', async (t) => {
   t.plan(4)
 
   const { bridge, dhtPromClient } = await setup(t)
 
-  bridge.aliasRpcServer.on('alias-request', ({ uid, remotePublicKey, alias, targetPublicKey }) => {
+  bridge.aliasRpcServer.on('alias-request', ({ uid, _remotePublicKey, alias, targetPublicKey }) => {
     t.is(alias, 'dummy', 'correct alias')
     t.alike(targetPublicKey, dhtPromClient.publicKey, 'correct target key got registered')
   })
@@ -149,26 +123,16 @@ test('A client which registers itself can get scraped', async t => {
 
   const baseUrl = await bridge.server.listen({ host: '127.0.0.1', port: 0 })
 
-  await new Promise(resolve => setTimeout(resolve, 1000)) // TODO: use swarm.flush again when bug fixed
-  await Promise.all([
-    dhtPromClient.ready(),
-    once(dhtPromClient, 'register-alias-success')
-  ])
+  await new Promise((resolve) => setTimeout(resolve, 1000)) // TODO: use swarm.flush again when bug fixed
+  await Promise.all([dhtPromClient.ready(), once(dhtPromClient, 'register-alias-success')])
 
-  const res = await axios.get(
-    `${baseUrl}/scrape/dummy/metrics`,
-    { validateStatus: null }
-  )
+  const res = await axios.get(`${baseUrl}/scrape/dummy/metrics`, { validateStatus: null })
 
   t.is(res.status, 200, 'correct status')
-  t.is(
-    res.data.includes('process_cpu_user_seconds_total'),
-    true,
-    'Successfully scraped metrics'
-  )
+  t.is(res.data.includes('process_cpu_user_seconds_total'), true, 'Successfully scraped metrics')
 })
 
-test('A client gets removed and closed after it expires', async t => {
+test('A client gets removed and closed after it expires', async (t) => {
   const { bridge, dhtPromClient } = await setup(t, {
     entryExpiryMs: 1200,
     checkExpiredsIntervalMs: 100
@@ -178,7 +142,7 @@ test('A client gets removed and closed after it expires', async t => {
   await dhtPromClient.ready()
 
   bridge.putAlias('dummy', dhtPromClient.publicKey)
-  await new Promise(resolve => setTimeout(resolve, 1000)) // TODO: use swarm.flush again when bug fixed
+  await new Promise((resolve) => setTimeout(resolve, 1000)) // TODO: use swarm.flush again when bug fixed
 
   // Can be 2 if the alias-request connection isn't cleaned up yet
   t.is(bridge.swarm.connections.size > 0, true, 'sanity check: connected')
@@ -193,7 +157,7 @@ test('A client gets removed and closed after it expires', async t => {
   t.pass('aliases file rewritten after an entry gets removed')
 })
 
-test('A client does not get removed if it renews before the expiry', async t => {
+test('A client does not get removed if it renews before the expiry', async (t) => {
   // Test is somewhat susceptible to CPU blocking due to timings
   // (add more margin if that happens in practice)
   const { bridge } = await setup(t, {
@@ -210,20 +174,16 @@ test('A client does not get removed if it renews before the expiry', async t => 
 
   t.is(bridge.aliases.size, 1, 'sanity check')
 
-  await new Promise(resolve => setTimeout(
-    resolve, bridge.entryExpiryMs + 100
-  ))
+  await new Promise((resolve) => setTimeout(resolve, bridge.entryExpiryMs + 100))
 
   t.is(bridge.aliases.size, 1, 'alias not removed if renewed in time')
 
-  await new Promise(resolve => setTimeout(
-    resolve, bridge.entryExpiryMs + 100
-  ))
+  await new Promise((resolve) => setTimeout(resolve, bridge.entryExpiryMs + 100))
 
   t.is(bridge.aliases.size, 0, 'alias removed when expired')
 })
 
-async function setup (t, bridgeOpts = {}) {
+async function setup(t, bridgeOpts = {}) {
   promClient.collectDefaultMetrics() // So we have something to scrape
   t.teardown(() => promClient.register.clear())
 
@@ -243,7 +203,7 @@ async function setup (t, bridgeOpts = {}) {
     ...bridgeOpts
   })
 
-  bridge.on('upstream-error', e => {
+  bridge.on('upstream-error', (e) => {
     console.warn(e.stack)
   })
 
@@ -260,7 +220,7 @@ async function setup (t, bridgeOpts = {}) {
     'my-service',
     { bootstrap, hostname: 'my-hostname', clientProtomuxRpcClient }
   )
-  dhtPromClient.on('register-alias-error', e => {
+  dhtPromClient.on('register-alias-error', (e) => {
     console.warn(e.stack)
   })
 

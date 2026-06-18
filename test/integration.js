@@ -108,7 +108,7 @@ test('Integration test, happy path', async (t) => {
   let gotScrapedOnceSuccessfully = false
   {
     const stdoutDec = new NewlineDecoder('utf-8')
-    firstBridgeProc.stdout.on('data', async (d) => {
+    firstBridgeProc.stdout.on('data', (d) => {
       if (DEBUG) console.log(d.toString())
 
       for (const line of stdoutDec.push(d)) {
@@ -256,7 +256,7 @@ test('Integration test, happy path', async (t) => {
     let secondClientScrapeReqId = null
 
     const stdoutDec = new NewlineDecoder('utf-8')
-    restartedBridgeProc.stdout.on('data', async (d) => {
+    restartedBridgeProc.stdout.on('data', (d) => {
       if (DEBUG) console.log(d.toString())
 
       for (const line of stdoutDec.push(d)) {

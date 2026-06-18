@@ -98,7 +98,7 @@ test('No new alias if adding same key', async (t) => {
   bridge.putAlias('dummy', key)
   const clientA = bridge.aliases.get('dummy')
 
-  t.is(clientA != null, true, 'sanity check')
+  t.is(clientA !== null, true, 'sanity check')
   bridge.putAlias('dummy', key)
   t.is(clientA, bridge.aliases.get('dummy'), 'no new client')
 
@@ -111,7 +111,7 @@ test('A client which registers itself can get scraped', async (t) => {
 
   const { bridge, dhtPromClient } = await setup(t)
 
-  bridge.aliasRpcServer.on('alias-request', ({ uid, remotePublicKey, alias, targetPublicKey }) => {
+  bridge.aliasRpcServer.on('alias-request', ({ uid, _remotePublicKey, alias, targetPublicKey }) => {
     t.is(alias, 'dummy', 'correct alias')
     t.alike(targetPublicKey, dhtPromClient.publicKey, 'correct target key got registered')
   })

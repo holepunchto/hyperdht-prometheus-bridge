@@ -12,7 +12,6 @@ const promClient = require('bare-prom-client')
 const DhtPromClient = require('dht-prom-client')
 const HyperDHT = require('hyperdht')
 const z32 = require('z32')
-const fetch = require('bare-fetch')
 const ProtomuxRpcClient = require('protomux-rpc-client')
 
 const BRIDGE_EXECUTABLE = path.join(path.dirname(__dirname), 'run.js')

@@ -1,13 +1,17 @@
+require('bare-node-runtime/global')
+
 const path = require('path')
 const { once } = require('events')
 
 const test = require('brittle')
-const promClient = require('prom-client')
+const promClient = require('bare-prom-client')
 const DhtPromClient = require('dht-prom-client')
 const createTestnet = require('hyperdht/testnet')
 const HyperDHT = require('hyperdht')
-const fastify = require('fastify')
-const axios = require('axios')
+const fastify = require('fastify', {
+  with: { imports: 'bare-node-runtime/imports' }
+})
+const fetch = require('bare-fetch')
 const hypCrypto = require('hypercore-crypto')
 const getTmpDir = require('test-tmp')
 const PrometheusDhtBridge = require('../index')
@@ -25,10 +29,14 @@ test('put alias + lookup happy flow', async (t) => {
   bridge.putAlias('dummy', dhtPromClient.publicKey)
   await new Promise((resolve) => setTimeout(resolve, 1000)) // TODO: use swarm.flush again when bug fixed
 
-  const res = await axios.get(`${baseUrl}/scrape/dummy/metrics`, { validateStatus: null })
+  const res = await fetch(`${baseUrl}/scrape/dummy/metrics`)
 
   t.is(res.status, 200, 'correct status')
-  t.is(res.data.includes('process_cpu_user_seconds_total'), true, 'Successfully scraped metrics')
+  t.is(
+    (await res.text()).includes('process_cpu_user_seconds_total'),
+    true,
+    'Successfully scraped metrics'
+  )
 })
 
 test('404 on unknown alias', async (t) => {
@@ -38,9 +46,9 @@ test('404 on unknown alias', async (t) => {
 
   const baseUrl = await bridge.server.listen({ host: '127.0.0.1', port: 0 })
 
-  const res = await axios.get(`${baseUrl}/scrape/nothinghere/metrics`, { validateStatus: null })
+  const res = await fetch(`${baseUrl}/scrape/nothinghere/metrics`)
   t.is(res.status, 404, 'correct status')
-  t.is(res.data.includes('Unknown alias'), true, 'Sensible err msg')
+  t.is((await res.text()).includes('Unknown alias'), true, 'Sensible err msg')
 })
 
 test('502 with uid if upstream returns success: false', async (t) => {
@@ -67,9 +75,9 @@ test('502 with uid if upstream returns success: false', async (t) => {
   bridge.putAlias('dummy', dhtPromClient.publicKey)
   await new Promise((resolve) => setTimeout(resolve, 1000)) // TODO: use swarm.flush again when bug fixed
 
-  const res = await axios.get(`${baseUrl}/scrape/dummy/metrics`, { validateStatus: null })
+  const res = await fetch(`${baseUrl}/scrape/dummy/metrics`)
   t.is(res.status, 502, 'correct status')
-  t.is(res.data.includes(reqUid), true, 'uid included in error message')
+  t.is((await res.text()).includes(reqUid), true, 'uid included in error message')
 })
 
 test('502 if upstream unavailable', async (t) => {
@@ -84,9 +92,9 @@ test('502 if upstream unavailable', async (t) => {
   await protomuxRpcClient.close()
   await dhtPromClient.close()
 
-  const res = await axios.get(`${baseUrl}/scrape/dummy/metrics`, { validateStatus: null })
+  const res = await fetch(`${baseUrl}/scrape/dummy/metrics`)
   t.is(res.status, 502, 'correct status')
-  t.is(res.data, 'Upstream unavailable')
+  t.is(await res.text(), 'Upstream unavailable')
 })
 
 test('No new alias if adding same key', async (t) => {
@@ -126,10 +134,14 @@ test('A client which registers itself can get scraped', async (t) => {
   await new Promise((resolve) => setTimeout(resolve, 1000)) // TODO: use swarm.flush again when bug fixed
   await Promise.all([dhtPromClient.ready(), once(dhtPromClient, 'register-alias-success')])
 
-  const res = await axios.get(`${baseUrl}/scrape/dummy/metrics`, { validateStatus: null })
+  const res = await fetch(`${baseUrl}/scrape/dummy/metrics`)
 
   t.is(res.status, 200, 'correct status')
-  t.is(res.data.includes('process_cpu_user_seconds_total'), true, 'Successfully scraped metrics')
+  t.is(
+    (await res.text()).includes('process_cpu_user_seconds_total'),
+    true,
+    'Successfully scraped metrics'
+  )
 })
 
 test('A client gets removed and closed after it expires', async (t) => {
@@ -194,7 +206,21 @@ async function setup(t, bridgeOpts = {}) {
 
   const swarm = new Hyperswarm({ bootstrap })
   const protomuxRpcClient = new ProtomuxRpcClient(swarm.dht, { keyPair: swarm.keyPair })
-  const server = fastify({ logger: false })
+  const server = fastify({
+    // the default no-logging option breaks when using bare
+    // so we provide a custom logger that does nothing instead
+    loggerInstance: {
+      info: () => {},
+      warn: () => {},
+      error: () => {},
+      fatal: () => {},
+      trace: () => {},
+      debug: () => {},
+      child: function () {
+        return this
+      }
+    }
+  })
   const tmpDir = await getTmpDir(t)
   const prometheusTargetsLoc = path.join(tmpDir, 'prom-targets.json')
   const bridge = new PrometheusDhtBridge(swarm, server, protomuxRpcClient, sharedSecret, {

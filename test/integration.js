@@ -8,11 +8,11 @@ const test = require('brittle')
 const createTestnet = require('hyperdht/testnet')
 const hypCrypto = require('hypercore-crypto')
 const idEnc = require('hypercore-id-encoding')
-const promClient = require('prom-client')
+const promClient = require('bare-prom-client')
 const DhtPromClient = require('dht-prom-client')
 const HyperDHT = require('hyperdht')
 const z32 = require('z32')
-const axios = require('axios')
+const fetch = require('bare-fetch')
 const ProtomuxRpcClient = require('protomux-rpc-client')
 
 const BRIDGE_EXECUTABLE = path.join(path.dirname(__dirname), 'run.js')
@@ -163,11 +163,12 @@ test('Integration test, happy path', async (t) => {
 
   await tAliasReq
 
-  const res = await axios.get(`${bridgeHttpAddress}/metrics`)
+  const res = await fetch(`${bridgeHttpAddress}/metrics`)
+  const data = await res.text()
   t.is(res.status, 200, 'can scrape own metrics')
-  t.is(res.data.includes('nodejs_eventloop_lag_mean_seconds'), true, 'sanity check')
+  t.is(data.includes('nodejs_eventloop_lag_mean_seconds'), true, 'sanity check')
   t.is(
-    res.data.includes('hyperswarm_server_connections_opened'),
+    data.includes('hyperswarm_server_connections_opened'),
     true,
     'Own metrics include swarm metrics'
   )

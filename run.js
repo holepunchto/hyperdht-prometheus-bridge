@@ -1,12 +1,15 @@
 #! /usr/bin/env node
+require('bare-node-runtime/global')
 
 const HyperDht = require('hyperdht')
 const Hyperswarm = require('hyperswarm')
 const pino = require('pino')
-const fastify = require('fastify')
+const fastify = require('fastify', {
+  with: { imports: 'bare-node-runtime/imports' }
+})
 const idEnc = require('hypercore-id-encoding')
 const goodbye = require('graceful-goodbye')
-const promClient = require('prom-client')
+const promClient = require('bare-prom-client')
 const ProtomuxRpcClient = require('protomux-rpc-client')
 
 const PrometheusDhtBridge = require('./index')
@@ -82,7 +85,7 @@ async function main() {
   })
   const protomuxRpcClient = new ProtomuxRpcClient(swarm.dht, { keyPair: swarm.keyPair })
 
-  const server = fastify({ logger })
+  const server = fastify({ loggerInstance: logger })
   const bridge = new PrometheusDhtBridge(swarm, server, protomuxRpcClient, sharedSecret, {
     keyPairSeed,
     ownPromClient: promClient,

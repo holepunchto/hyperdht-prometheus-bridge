@@ -1,4 +1,6 @@
-require('bare-node-runtime/global')
+if (global.Bare) {
+  require('bare-node-runtime/global')
+}
 
 const path = require('path')
 const { once } = require('events')
@@ -11,7 +13,6 @@ const HyperDHT = require('hyperdht')
 const fastify = require('fastify', {
   with: { imports: 'bare-node-runtime/imports' }
 })
-const fetch = require('bare-fetch')
 const hypCrypto = require('hypercore-crypto')
 const getTmpDir = require('test-tmp')
 const PrometheusDhtBridge = require('../index')

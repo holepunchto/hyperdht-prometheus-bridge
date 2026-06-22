@@ -1,7 +1,4 @@
-if (global.Bare) {
-  require('bare-node-runtime/global')
-}
-
+require('#globals')
 const path = require('path')
 const { once } = require('events')
 

@@ -10,7 +10,8 @@
     "integration": "./prep-integration-test.sh && brittle-bare test/integration.js"
   },
   "bin": {
-    "hyper-dht-prometheus": "./run.js"
+    "hyper-dht-prometheus": "./run.js",
+    "hyper-dht-prometheus-bare": "./run-bare.js"
   },
   "repository": {
     "type": "git",
@@ -64,7 +65,7 @@
     "safety-catch": "^1.0.2"
   },
   "imports": {
-    "path": {
+        "path": {
       "bare": "bare-path",
       "default": "path"
     },
@@ -76,9 +77,9 @@
       "bare": "bare-fs",
       "default": "fs"
     },
-    "fetch": {
-      "bare": "bare-fetch",
-      "default": "fetch"
+    "#globals": {
+      "bare": "./lib/globals/bare.js",
+      "default": "./lib/globals/node.js"
     }
   }
 }

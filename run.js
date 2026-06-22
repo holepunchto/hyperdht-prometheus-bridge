@@ -1,8 +1,5 @@
 #! /usr/bin/env node
-if (global.Bare) {
-  require('bare-node-runtime/global')
-}
-
+require('#globals')
 const HyperDht = require('hyperdht')
 const Hyperswarm = require('hyperswarm')
 const pino = require('pino')

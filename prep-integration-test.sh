@@ -21,7 +21,7 @@ echo "Prometheus is not yet installed"
 URL="https://github.com/prometheus/prometheus/releases/download/v${PROMETHEUS_VERSION}/prometheus-${PROMETHEUS_VERSION}.${OWN_OS}.tar.gz"
 echo "Downloading Prometheus from ${URL}"
 
-wget -O ./prometheus.tar.gz $URL
+wget -nv -O ./prometheus.tar.gz $URL
 
 tar -xf prometheus.tar.gz
 

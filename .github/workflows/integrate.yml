@@ -11,6 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     name: Test
     steps:
-      - uses: holepunchto/actions/node-base@v1
-      - run: npm t
+      - uses: holepunchto/actions/bare-base@v1
+      - run: npm run test
       - run: npm run integration
+      - run: npm run test:bare
+      - run: npm run integration:bare

@@ -67,7 +67,7 @@
     "safety-catch": "^1.0.2"
   },
   "imports": {
-        "path": {
+    "path": {
       "bare": "bare-path",
       "default": "path"
     },

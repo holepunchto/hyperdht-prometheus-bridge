@@ -1,18 +1,16 @@
-name: Integrate
+name: CI
 on:
   push:
-    branches: [main]
+    branches:
+      - main
   pull_request:
-    branches: [main]
+    branches:
+      - main
 jobs:
   test:
     runs-on: ubuntu-latest
     name: Test
     steps:
       - uses: holepunchto/actions/node-base@v1
-      - run: npm run lint
-      - run: npm run test
-        id: test
-        if: '!cancelled()'
+      - run: npm t
       - run: npm run integration
-        if: "!cancelled() && steps.test.conclusion == 'success'"

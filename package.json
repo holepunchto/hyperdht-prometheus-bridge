@@ -4,12 +4,11 @@
   "description": "Bridge to scrape Prometheus metrics fully peer to peer",
   "main": "index.js",
   "scripts": {
-    "lint": "prettier --check . && lunte",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test": "brittle --coverage test/test.js",
+    "test": "prettier --check . && lunte && brittle --coverage test/test.js",
     "test:bare": "brittle-bare --coverage test/test.js",
-    "integration": "./prep-integration-test.sh && brittle test/integration.js",
+    "integration": "./prep-integration-test.sh && brittle --coverage test/integration.js",
     "integration:bare": "./prep-integration-test.sh && brittle-bare --coverage test/integration.js"
   },
   "bin": {

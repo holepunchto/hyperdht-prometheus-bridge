@@ -15,6 +15,4 @@ jobs:
         id: test
         if: '!cancelled()'
       - run: npm run integration
-        if: '!cancelled() && steps.test.conclusion == ''success'''
-        
-
+        if: "!cancelled() && steps.test.conclusion == 'success'"

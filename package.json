@@ -6,8 +6,10 @@
   "scripts": {
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test": "npm run format:check && lunte && brittle test/test.js",
-    "integration": "./prep-integration-test.sh && brittle test/integration.js"
+    "test": "prettier --check . && lunte && brittle --coverage test/test.js",
+    "test:bare": "brittle-bare --coverage test/test.js",
+    "integration": "./prep-integration-test.sh && brittle --coverage test/integration.js",
+    "integration:bare": "./prep-integration-test.sh && brittle-bare --coverage test/integration.js"
   },
   "bin": {
     "hyper-dht-prometheus": "./run.js"

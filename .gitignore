@@ -5,3 +5,5 @@ prometheus.tar.gz
 prometheus/targets.json
 
 data/
+
+coverage

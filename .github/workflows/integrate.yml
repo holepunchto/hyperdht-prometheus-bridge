@@ -7,6 +7,11 @@ on:
     branches:
       - main
 jobs:
+  security:
+    runs-on: ubuntu-latest
+    name: Security
+    steps:
+      - uses: holepunchto/actions/security-base@v1
   test:
     runs-on: ubuntu-latest
     name: Test

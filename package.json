@@ -36,6 +36,8 @@
     "bare-events": "^2.9.1",
     "bare-fetch": "^3.0.1",
     "bare-path": "^3.0.1",
+    "bare-process": "^4.5.0",
+    "bare-subprocess": "^6.1.0",
     "brittle": "^3.5.2",
     "hypercore-crypto": "^3.4.2",
     "hyperdht": "^6.15.1",
@@ -78,6 +80,14 @@
     "fs": {
       "bare": "bare-fs",
       "default": "fs"
+    },
+    "process": {
+      "bare": "bare-process",
+      "default": "process"
+    },
+    "child_process": {
+      "bare": "bare-subprocess",
+      "default": "child_process"
     },
     "#globals": {
       "bare": "./lib/globals/bare.js",

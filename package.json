@@ -69,6 +69,10 @@
     "safety-catch": "^1.0.2"
   },
   "imports": {
+    "#globals": {
+      "bare": "./lib/globals/bare.js",
+      "default": "./lib/globals/node.js"
+    },
     "path": {
       "bare": "bare-path",
       "default": "path"
@@ -88,10 +92,6 @@
     "child_process": {
       "bare": "bare-subprocess",
       "default": "child_process"
-    },
-    "#globals": {
-      "bare": "./lib/globals/bare.js",
-      "default": "./lib/globals/node.js"
     }
   }
 }

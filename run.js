@@ -2,7 +2,9 @@
 require('#globals')
 const HyperDht = require('hyperdht')
 const Hyperswarm = require('hyperswarm')
-const pino = require('pino')
+const pino = require('pino', {
+  with: { imports: 'bare-node-runtime/imports' }
+})
 const fastify = require('fastify', {
   with: { imports: 'bare-node-runtime/imports' }
 })

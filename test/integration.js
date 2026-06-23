@@ -1,3 +1,4 @@
+require('#globals')
 const fs = require('fs')
 const process = require('process')
 const { spawn } = require('child_process')

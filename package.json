@@ -8,7 +8,7 @@
     "format:check": "prettier --check .",
     "test": "prettier --check . && lunte && brittle-node --coverage test/test.js",
     "test:bare": "brittle-bare --coverage test/test.js",
-    "integration": "./prep-integration-test.sh && brittle test/integration.js",
+    "integration": "./prep-integration-test.sh && brittle-node test/integration.js",
     "integration:bare": "./prep-integration-test.sh && brittle-bare test/integration.js"
   },
   "bin": {

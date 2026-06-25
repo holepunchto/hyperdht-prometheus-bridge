@@ -6,9 +6,9 @@
   "scripts": {
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test": "prettier --check . && lunte && brittle --coverage test/test.js",
+    "test": "prettier --check . && lunte && brittle-node --coverage test/test.js",
     "test:bare": "brittle-bare --coverage test/test.js",
-    "integration": "./prep-integration-test.sh && brittle test/integration.js",
+    "integration": "./prep-integration-test.sh && brittle-node test/integration.js",
     "integration:bare": "./prep-integration-test.sh && brittle-bare test/integration.js"
   },
   "bin": {
@@ -41,7 +41,7 @@
     "bare-path": "^3.0.1",
     "bare-process": "^4.5.0",
     "bare-subprocess": "^6.1.0",
-    "brittle": "^3.5.2",
+    "brittle": "^4.0.2",
     "hypercore-crypto": "^3.4.2",
     "hyperdht": "^6.15.1",
     "lunte": "^1.8.0",

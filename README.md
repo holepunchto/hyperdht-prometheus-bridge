@@ -25,18 +25,6 @@ Configuration is done through environment variables:
 - `DHT_PROM_HTTP_PORT`: port where the http server listens. Defaults to a random port.
 - `DHT_PROM_HTTP_HOST`: host where the http server listens. Defaults to 127.0.0.1
 
-#### Docker
-
-```
-docker run --network host --env DHT_PROM_SHARED_SECRET=<A 64 character hex string> --mount type=bind,source=/etc/prometheus/config/prometheus-dht-targets,destination=/home/dht-prometheus/prometheus
-```
-
-The intent is for the prometheus service to read its config from a read-only bind mount to `/etc/prometheus/config`, and for its config file to reference `./prometheus-dht-targets/targets.json`
-
-Note: `/etc/prometheus/config/prometheus-dht-targets` should be writable by the container's user.
-
-Note: `--network=host` is optional, but HyperDHT holepunching can struggle using the default bridge network, particularly for LAN and localhost connections.
-
 #### CLI
 
 Install:

@@ -361,7 +361,7 @@ global:
   evaluation_interval: 1s
 
 scrape_configs:
-- job_name: 'dht-prom-redirects'
+- job_name: 'hyper-dht-prom-redirects'
   file_sd_configs:
   - files:
     - '${promTargetsLoc}'

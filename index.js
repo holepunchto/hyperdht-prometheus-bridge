@@ -2,9 +2,8 @@ const ReadyResource = require('ready-resource')
 const idEnc = require('hypercore-id-encoding')
 const b4a = require('b4a')
 const safetyCatch = require('safety-catch')
-const AliasRpcServer = require('dht-prom-alias-rpc')
-
-const ScraperClient = require('dht-prom-client/scraper')
+const AliasRpcServer = require('hyper-dht-prom-alias-rpc')
+const ScraperClient = require('hyper-dht-prom-client/scraper')
 const { writePromTargets, readPromTargets } = require('./lib/prom-targets')
 const debounceify = require('debounceify')
 

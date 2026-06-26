@@ -19,11 +19,11 @@ The hyper-dht-prometheus service fulfils two complementary roles:
 
 Configuration is done through environment variables:
 
-- `DHT_PROM_KEY_PAIR_SEED`: 32-byte seed passed to `HyperDHT.keyPair()`, set as hex or z32. Set this to have a consistent public key (otherwise random, which is only useful for tests).
-- `DHT_PROM_SHARED_SECRET`: 32-byte secret key, set as hex or z32.
-- `DHT_PROM_LOG_LEVEL`: defaults to info
-- `DHT_PROM_HTTP_PORT`: port where the http server listens. Defaults to a random port.
-- `DHT_PROM_HTTP_HOST`: host where the http server listens. Defaults to 127.0.0.1
+- `HYPER_DHT_PROM_KEY_PAIR_SEED`: 32-byte seed passed to `HyperDHT.keyPair()`, set as hex or z32. Set this to have a consistent public key (otherwise random, which is only useful for tests).
+- `HYPER_DHT_PROM_SHARED_SECRET`: 32-byte secret key, set as hex or z32.
+- `HYPER_DHT_PROM_LOG_LEVEL`: defaults to info
+- `HYPER_DHT_PROM_HTTP_PORT`: port where the http server listens. Defaults to a random port.
+- `HYPER_DHT_PROM_HTTP_HOST`: host where the http server listens. Defaults to 127.0.0.1
 
 #### CLI
 
@@ -36,7 +36,7 @@ npm i -g hyper-dht-prometheus
 Run:
 
 ```
-DHT_PROM_PROMETHEUS_TARGETS_LOC=path/to/prometheus/targets.json DHT_PROM_HTTP_PORT=30000 DHT_PROM_SHARED_SECRET=<A 64 character hex string> hyper-dht-prometheus
+HYPER_DHT_PROM_PROMETHEUS_TARGETS_LOC=path/to/prometheus/targets.json HYPER_DHT_PROM_HTTP_PORT=30000 HYPER_DHT_PROM_SHARED_SECRET=<A 64 character hex string> hyper-dht-prometheus
 ```
 
 ## Test

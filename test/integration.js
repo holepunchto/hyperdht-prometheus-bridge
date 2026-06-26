@@ -77,12 +77,12 @@ test('Integration test, happy path', async (t) => {
 
   // 1) Setup the bridge
   const bridgeEnvVars = {
-    DHT_PROM_PROMETHEUS_TARGETS_LOC: promTargetsLoc,
-    DHT_PROM_SHARED_SECRET: z32SharedSecret,
-    DHT_PROM_KEY_PAIR_SEED: idEnc.normalize(hypCrypto.randomBytes(32)),
-    DHT_PROM_BOOTSTRAP_PORT: testnet.bootstrap[0].port,
-    _DHT_PROM_FORCE_FLUSH: true,
-    DHT_PROM_LOG_LEVEL: 'debug'
+    HYPER_DHT_PROM_PROMETHEUS_TARGETS_LOC: promTargetsLoc,
+    HYPER_DHT_PROM_SHARED_SECRET: z32SharedSecret,
+    HYPER_DHT_PROM_KEY_PAIR_SEED: idEnc.normalize(hypCrypto.randomBytes(32)),
+    HYPER_DHT_PROM_BOOTSTRAP_PORT: testnet.bootstrap[0].port,
+    _HYPER_DHT_PROM_FORCE_FLUSH: true,
+    HYPER_DHT_PROM_LOG_LEVEL: 'debug'
   }
 
   const firstBridgeProc = spawn(process.execPath, [BRIDGE_EXECUTABLE], {
@@ -231,7 +231,7 @@ test('Integration test, happy path', async (t) => {
   const restartedBridgeProc = spawn(process.execPath, [BRIDGE_EXECUTABLE], {
     env: {
       ...bridgeEnvVars,
-      DHT_PROM_HTTP_PORT: bridgeHttpPort // Reused to simplify the test (we ignore the small chance that the port is already used by another process)
+      HYPER_DHT_PROM_HTTP_PORT: bridgeHttpPort // Reused to simplify the test (we ignore the small chance that the port is already used by another process)
     }
   })
 

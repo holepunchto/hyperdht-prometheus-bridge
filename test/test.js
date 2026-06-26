@@ -4,7 +4,7 @@ const { once } = require('events')
 
 const test = require('brittle')
 const promClient = require('bare-prom-client')
-const DhtPromClient = require('dht-prom-client')
+const DhtPromClient = require('hyper-dht-prom-client')
 const createTestnet = require('hyperdht/testnet')
 const HyperDHT = require('hyperdht')
 const fastify = require('fastify', {

@@ -5,7 +5,7 @@ set -e # Exit immediately on any unexpected error
 
 echo "Preparing integration test (ensuring Prometheus is downloaded)"
 
-PROMETHEUS_VERSION="2.53.1"
+PROMETHEUS_VERSION="2.55.1"
 # Assumes Linux intel--change for ARM or mac (https://prometheus.io/download/)
 OWN_OS="linux-amd64"
 TARGET_LOC=./prometheus/prometheus

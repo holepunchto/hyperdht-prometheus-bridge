@@ -10,7 +10,7 @@ const createTestnet = require('hyperdht/testnet')
 const hypCrypto = require('hypercore-crypto')
 const idEnc = require('hypercore-id-encoding')
 const promClient = require('bare-prom-client')
-const DhtPromClient = require('hyper-dht-prom-client')
+const DhtPromClient = require('hyperdht-prom-client')
 const HyperDHT = require('hyperdht')
 const z32 = require('z32')
 const ProtomuxRpcClient = require('protomux-rpc-client')
@@ -77,12 +77,12 @@ test('Integration test, happy path', async (t) => {
 
   // 1) Setup the bridge
   const bridgeEnvVars = {
-    HYPER_DHT_PROM_PROMETHEUS_TARGETS_LOC: promTargetsLoc,
-    HYPER_DHT_PROM_SHARED_SECRET: z32SharedSecret,
-    HYPER_DHT_PROM_KEY_PAIR_SEED: idEnc.normalize(hypCrypto.randomBytes(32)),
-    HYPER_DHT_PROM_BOOTSTRAP_PORT: testnet.bootstrap[0].port,
-    _HYPER_DHT_PROM_FORCE_FLUSH: true,
-    HYPER_DHT_PROM_LOG_LEVEL: 'debug'
+    HYPERDHT_PROM_PROMETHEUS_TARGETS_LOC: promTargetsLoc,
+    HYPERDHT_PROM_SHARED_SECRET: z32SharedSecret,
+    HYPERDHT_PROM_KEY_PAIR_SEED: idEnc.normalize(hypCrypto.randomBytes(32)),
+    HYPERDHT_PROM_BOOTSTRAP_PORT: testnet.bootstrap[0].port,
+    _HYPERDHT_PROM_FORCE_FLUSH: true,
+    HYPERDHT_PROM_LOG_LEVEL: 'debug'
   }
 
   const firstBridgeProc = spawn(process.execPath, [BRIDGE_EXECUTABLE], {
@@ -231,7 +231,7 @@ test('Integration test, happy path', async (t) => {
   const restartedBridgeProc = spawn(process.execPath, [BRIDGE_EXECUTABLE], {
     env: {
       ...bridgeEnvVars,
-      HYPER_DHT_PROM_HTTP_PORT: bridgeHttpPort // Reused to simplify the test (we ignore the small chance that the port is already used by another process)
+      HYPERDHT_PROM_HTTP_PORT: bridgeHttpPort // Reused to simplify the test (we ignore the small chance that the port is already used by another process)
     }
   })
 
@@ -361,7 +361,7 @@ global:
   evaluation_interval: 1s
 
 scrape_configs:
-- job_name: 'hyper-dht-prom-redirects'
+- job_name: 'hyperdht-prom-redirects'
   file_sd_configs:
   - files:
     - '${promTargetsLoc}'

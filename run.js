@@ -19,40 +19,40 @@ const instrument = require('./lib/instrument')
 function loadConfig() {
   const config = {
     prometheusTargetsLoc:
-      process.env.HYPER_DHT_PROM_PROMETHEUS_TARGETS_LOC || './prometheus/targets.json',
-    logLevel: (process.env.HYPER_DHT_PROM_LOG_LEVEL || 'info').toLowerCase(),
-    httpPort: parseInt(process.env.HYPER_DHT_PROM_HTTP_PORT || 0),
-    httpHost: process.env.HYPER_DHT_PROM_HTTP_HOST || '127.0.0.1',
-    dhtPort: parseInt(process.env.HYPER_DHT_PROM_DHT_PORT || 0),
-    exposeReplSwarm: process.env.HYPER_DHT_PROM_EXPOSE_REPL_SWARM === 'true',
-    _forceFlushOnClientReady: process.env._HYPER_DHT_PROM_FORCE_FLUSH || 'false' // Tests only
+      process.env.HYPERDHT_PROM_PROMETHEUS_TARGETS_LOC || './prometheus/targets.json',
+    logLevel: (process.env.HYPERDHT_PROM_LOG_LEVEL || 'info').toLowerCase(),
+    httpPort: parseInt(process.env.HYPERDHT_PROM_HTTP_PORT || 0),
+    httpHost: process.env.HYPERDHT_PROM_HTTP_HOST || '127.0.0.1',
+    dhtPort: parseInt(process.env.HYPERDHT_PROM_DHT_PORT || 0),
+    exposeReplSwarm: process.env.HYPERDHT_PROM_EXPOSE_REPL_SWARM === 'true',
+    _forceFlushOnClientReady: process.env._HYPERDHT_PROM_FORCE_FLUSH || 'false' // Tests only
   }
 
   config.serverLogLevel = config.logLevel === 'debug' ? 'info' : 'warn' // No need to log all metrics requests
 
   try {
-    config.sharedSecret = idEnc.decode(process.env.HYPER_DHT_PROM_SHARED_SECRET)
+    config.sharedSecret = idEnc.decode(process.env.HYPERDHT_PROM_SHARED_SECRET)
   } catch (e) {
-    console.error('HYPER_DHT_PROM_SHARED_SECRET env var must be set to a valid hypercore key')
+    console.error('HYPERDHT_PROM_SHARED_SECRET env var must be set to a valid hypercore key')
     process.exit(1)
   }
 
   try {
-    config.keyPairSeed = idEnc.decode(idEnc.normalize(process.env.HYPER_DHT_PROM_KEY_PAIR_SEED))
+    config.keyPairSeed = idEnc.decode(idEnc.normalize(process.env.HYPERDHT_PROM_KEY_PAIR_SEED))
   } catch (e) {
-    if (process.env.HYPER_DHT_PROM_KEY_PAIR_SEED) {
+    if (process.env.HYPERDHT_PROM_KEY_PAIR_SEED) {
       console.error(
-        'HYPER_DHT_PROM_KEY_PAIR_SEED env var, if set, must be set to a valid hypercore key'
+        'HYPERDHT_PROM_KEY_PAIR_SEED env var, if set, must be set to a valid hypercore key'
       )
       process.exit(1)
     }
   }
 
-  if (process.env.HYPER_DHT_PROM_BOOTSTRAP_PORT) {
+  if (process.env.HYPERDHT_PROM_BOOTSTRAP_PORT) {
     // For tests
     config.bootstrap = [
       {
-        port: parseInt(process.env.HYPER_DHT_PROM_BOOTSTRAP_PORT),
+        port: parseInt(process.env.HYPERDHT_PROM_BOOTSTRAP_PORT),
         host: '127.0.0.1'
       }
     ]

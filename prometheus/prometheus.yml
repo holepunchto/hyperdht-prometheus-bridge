@@ -5,11 +5,11 @@ global:
   evaluation_interval: 15s
 
 scrape_configs:
-  - job_name: 'hyper-dht-prometheus' # The metrics of the hyper-dht-prometheus service itself
+  - job_name: 'hyperdht-prometheus' # The metrics of the hyperdht-prometheus-bridge service itself
     static_configs:
       - targets:
-          - 'localhost:30000' # Replace with the host and port where the hyper-dht-prometheus http server runs
-  - job_name: 'hyper-dht-prom-redirects'
+          - 'localhost:30000' # Replace with the host and port where the hyperdht-prometheus-bridge http server runs
+  - job_name: 'hyperdht-prom-redirects'
     file_sd_configs:
       - files:
           - 'targets.json'
@@ -33,5 +33,5 @@ scrape_configs:
           replacement: '$1'
           target_label: service
         - source_labels: [__address__]
-          replacement: 'localhost:30000' # Replace with the host and port where the hyper-dht-prometheus http server runs
+          replacement: 'localhost:30000' # Replace with the host and port where the hyperdht-prometheus-bridge http server runs
           target_label: __address__

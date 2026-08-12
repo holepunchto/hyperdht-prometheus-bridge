@@ -1,6 +1,6 @@
 {
   "name": "hyperdht-prometheus-bridge",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "Bridge to scrape Prometheus metrics fully peer to peer",
   "main": "index.js",
   "scripts": {

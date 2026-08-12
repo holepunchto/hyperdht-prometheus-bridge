@@ -1,19 +1,19 @@
-# hyperdht-prometheus
+# hyperdht-prometheus-bridge
 
 A bridge to scrape Prometheus metrics from self-registering services, all using direct, end-to-end encrypted peer-to-peer connections (not http).
 
 Service discovery is done with a decentralised hash table ([HyperDHT](https://github.com/holepunchto/hyperdht)). This means that both this service and the clients it scrapes can live behind a firewall and need no reverse proy nor DNS entries.
 
-An advantage is the small amount of configuration required. [Clients](https://github.com/holepunchto/hyperdht-prom-client) register themselves with the hyperdht-prometheus service, so no manual list of targets needs to be maintained. All a client needs to register itself, is the hyperdht-prometheus service's public key, and a shared secret.
+An advantage is the small amount of configuration required. [Clients](https://github.com/holepunchto/hyperdht-prometheus-client) register themselves with the hyperdht-prometheus-bridge service, so no manual list of targets needs to be maintained. All a client needs to register itself, is the hyperdht-prometheus-bridge service's public key, and a shared secret.
 
 ## Deployment
 
-hyperdht-prometheus is meant to be deployed alongside Prometheus. It manages a single `targets.json` file referenced from the main prometheus configuration (See [prometheus/prometheus.yml](prometheus/prometheus.yml) for an example).
+hyperdht-prometheus-bridge is meant to be deployed alongside Prometheus. It manages a single `targets.json` file referenced from the main prometheus configuration (See [prometheus/prometheus.yml](prometheus/prometheus.yml) for an example).
 
-The hyperdht-prometheus service fulfils two complementary roles:
+The hyperdht-prometheus-bridge service fulfils two complementary roles:
 
 - It maintains a `targets.json` file with aliases to all services which Prometheus should scrape.
-- It provides an HTTP server which receives Prometheus requests and forwards them to the instances of hyperdht-prom-client.
+- It provides an HTTP server which receives Prometheus requests and forwards them to the instances of hyperdht-prometheus-client.
 
 ### Run
 
@@ -30,13 +30,13 @@ Configuration is done through environment variables:
 Install:
 
 ```
-npm i -g hyperdht-prometheus
+npm i -g hyperdht-prometheus-bridge
 ```
 
 Run:
 
 ```
-HYPERDHT_PROM_PROMETHEUS_TARGETS_LOC=path/to/prometheus/targets.json HYPERDHT_PROM_HTTP_PORT=30000 HYPERDHT_PROM_SHARED_SECRET=<A 64 character hex string> hyperdht-prometheus
+HYPERDHT_PROM_PROMETHEUS_TARGETS_LOC=path/to/prometheus/targets.json HYPERDHT_PROM_HTTP_PORT=30000 HYPERDHT_PROM_SHARED_SECRET=<A 64 character hex string> hyperdht-prometheus-bridge
 ```
 
 ## Test
